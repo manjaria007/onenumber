@@ -1,0 +1,38 @@
+{
+  "name": "onenumber",
+  "version": "0.1.0",
+  "description": "OneNumber: catch conflicting metric definitions across Confluence and Jira before they reach leadership. Atlassian Forge app for Codegeist 2026 (Apps for Business Teams).",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "forge:install-cli": "npm install -g @forge/cli@latest",
+    "forge:login": "forge login",
+    "site:provision": "forge site provision",
+    "register": "forge register",
+    "lint": "forge lint",
+    "deploy": "forge deploy --environment development",
+    "deploy:prod": "forge deploy --environment production",
+    "install:demo": "forge install --demo-site --environment development",
+    "install:jira": "forge install --site \"$ATLASSIAN_SITE\" --product jira --environment development",
+    "install:confluence": "forge install --site \"$ATLASSIAN_SITE\" --product confluence --environment development",
+    "install:upgrade": "forge install --upgrade --site \"$ATLASSIAN_SITE\" --product jira --environment development",
+    "tunnel": "forge tunnel",
+    "logs": "forge logs --environment development",
+    "seed": "node scripts/seed-demo.mjs",
+    "seed:dry-run": "node scripts/seed-demo.mjs --dry-run",
+    "setup": "node scripts/check-setup.mjs"
+  },
+  "dependencies": {
+    "@forge/api": "^6.0.0",
+    "@forge/bridge": "^5.0.0",
+    "@forge/kvs": "^1.0.0",
+    "@forge/react": "^11.0.0",
+    "@forge/resolver": "^1.6.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.0"
+  }
+}

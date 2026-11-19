@@ -1,0 +1,195 @@
+modules:
+  # ---------- Jira ----------
+  jira:issuePanel:
+    - key: onenumber-issue-panel
+      resource: issue-panel
+      resolver:
+        function: resolver
+      render: native
+      title: OneNumber
+      icon: https://developer.atlassian.com/platform/forge/images/icons/issue-panel-icon.svg
+
+  jira:globalPage:
+    - key: onenumber-metric-health
+      resource: health-page
+      resolver:
+        function: resolver
+      render: native
+      title: OneNumber Metric Health
+
+  # ---------- Confluence ----------
+  macro:
+    - key: onenumber-metric-card
+      resource: metric-card
+      resolver:
+        function: resolver
+      render: native
+      title: OneNumber metric card
+      description: Shows the canonical definition of a metric and any conflicting definitions.
+      config: true
+
+  confluence:contentBylineItem:
+    - key: onenumber-page-byline
+      resource: page-byline
+      resolver:
+        function: resolver
+      render: native
+      title: OneNumber
+
+  # ---------- Rovo ----------
+  rovo:agent:
+    - key: metric-steward
+      name: Metric Steward
+      description: Explains which definition of a business metric to use, why teams' numbers differ, and who owns each metric.
+      prompt: resource:agent-resource;prompt.txt
+      conversationStarters:
+        - Which churn definition should I use for the board deck?
+        - Why are Finance and Marketing reporting different numbers?
+        - Which metrics have conflicting definitions right now?
+        - Who owns net revenue?
+      actions:
+        - lookup-metric
+        - compare-metric-definitions
+        - list-metric-conflicts
+        - request-metric-reconciliation
+      followUpPrompt: Suggest one or two short follow-up questions about the metric's owner, its conflicts, or asking the data team to reconcile it.
+
+  rovo:mcp:
+    - key: onenumber-mcp
+      name: OneNumber Metrics
+      tools:
+        - lookup-metric
+        - compare-metric-definitions
+        - list-metric-conflicts
+        - request-metric-reconciliation
+
+  action:
+    - key: lookup-metric
+      name: Look up a metric definition
+      function: lookupMetric
+      actionVerb: GET
+      description: Returns the agreed definition of a business metric (churn, net revenue, active customers) with owner, time window, exclusions, page link, contributors from Teamwork Graph and conflict count. Use before quoting a metric.
+      inputs:
+        metricName:
+          title: Metric name
+          type: string
+          required: true
+          description: The metric name or a known alias, for example "churn rate" or "customer churn".
+
+    - key: compare-metric-definitions
+      name: Compare metric definitions
+      function: compareDefinitions
+      actionVerb: GET
+      description: Compares every team's definition of one metric and returns each concrete difference (time window, calculation, filters, exclusions, sources) with a severity and a plain-English explanation.
+      inputs:
+        metricName:
+          title: Metric name
+          type: string
+          required: true
+          description: The metric name or a known alias.
+
+    - key: list-metric-conflicts
+      name: List metric conflicts
+      function: listMetricConflicts
+      actionVerb: GET
+      description: Lists metrics whose definitions conflict between teams, with severity, teams involved and canonical owner, plus the metrics whose definitions agree.
+      inputs:
+        minimumSeverity:
+          title: Minimum severity
+          type: string
+          required: false
+          description: Only include conflicts at or above this level - low, medium or high. Defaults to low.
+
+    - key: request-metric-reconciliation
+      name: Ask data team to reconcile a metric
+      function: requestReconcile
+      actionVerb: CREATE
+      description: Creates a Jira task asking the data team to agree one canonical definition for a disputed metric, listing every difference and linking every definition page. Only call after the user confirms.
+      inputs:
+        metricName:
+          title: Metric name
+          type: string
+          required: true
+          description: The disputed metric to reconcile.
+        projectKey:
+          title: Jira project key
+          type: string
+          required: false
+          description: Project for the task, for example DATA. Defaults to the project set on the Metric Health page.
+        sourceIssueKey:
+          title: Related Jira request
+          type: string
+          required: false
+          description: Key of the business request that surfaced the conflict, for example MKT-12. It will be linked.
+        note:
+          title: Note
+          type: string
+          required: false
+          description: Short context for the data team, such as the meeting the number is needed for.
+
+  # ---------- Background sync ----------
+  trigger:
+    - key: confluence-page-events
+      function: onPageEvent
+      events:
+        - avi:confluence:created:page
+        - avi:confluence:updated:page
+
+  scheduledTrigger:
+    - key: hourly-reindex
+      function: onSchedule
+      interval: hour
+
+  function:
+    - key: resolver
+      handler: index.handler
+    - key: lookupMetric
+      handler: index.lookupMetric
+    - key: compareDefinitions
+      handler: index.compareMetricDefinitions
+    - key: listMetricConflicts
+      handler: index.listMetricConflicts
+    - key: requestReconcile
+      handler: index.requestMetricReconciliation
+    - key: onPageEvent
+      handler: index.onPageEvent
+    - key: onSchedule
+      handler: index.onSchedule
+
+resources:
+  - key: issue-panel
+    path: src/frontend/issue-panel.jsx
+  - key: health-page
+    path: src/frontend/health-page.jsx
+  - key: metric-card
+    path: src/frontend/metric-card.jsx
+  - key: page-byline
+    path: src/frontend/page-byline.jsx
+  - key: agent-resource
+    path: resources/agent
+
+app:
+  id: ari:cloud:ecosystem::app/00000000-0000-0000-0000-000000000000 # replaced by `forge register`
+  runtime:
+    name: nodejs22.x
+  compatibility:
+    jira:
+      required: true
+    confluence:
+      required: false
+
+permissions:
+  scopes:
+    # Jira: read business requests, create reconcile tasks
+    - read:jira-work
+    - write:jira-work
+    # Confluence: find and read metric definition pages
+    - read:page:confluence
+    - read:label:confluence
+    - search:confluence
+    - read:confluence-content.all
+    # App storage for the metric registry
+    - storage:app
+    # Teamwork Graph API (read-only): page contributors
+    - read:graph:page:confluence
+    - read:graph:user:atlassian
