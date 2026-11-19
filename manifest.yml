@@ -25,7 +25,8 @@ modules:
         function: resolver
       render: native
       title: OneNumber metric card
-      description: Shows the canonical definition of a metric and any conflicting definitions.
+      description: Shows the canonical definition of a metric and any conflicting
+        definitions.
       config: true
 
   confluence:contentBylineItem:
@@ -40,7 +41,8 @@ modules:
   rovo:agent:
     - key: metric-steward
       name: Metric Steward
-      description: Explains which definition of a business metric to use, why teams' numbers differ, and who owns each metric.
+      description: Explains which definition of a business metric to use, why teams'
+        numbers differ, and who owns each metric.
       prompt: resource:agent-resource;prompt.txt
       conversationStarters:
         - Which churn definition should I use for the board deck?
@@ -52,7 +54,8 @@ modules:
         - compare-metric-definitions
         - list-metric-conflicts
         - request-metric-reconciliation
-      followUpPrompt: Suggest one or two short follow-up questions about the metric's owner, its conflicts, or asking the data team to reconcile it.
+      followUpPrompt: Suggest one or two short follow-up questions about the metric's
+        owner, its conflicts, or asking the data team to reconcile it.
 
   rovo:mcp:
     - key: onenumber-mcp
@@ -68,19 +71,25 @@ modules:
       name: Look up a metric definition
       function: lookupMetric
       actionVerb: GET
-      description: Returns the agreed definition of a business metric (churn, net revenue, active customers) with owner, time window, exclusions, page link, contributors from Teamwork Graph and conflict count. Use before quoting a metric.
+      description: Returns the agreed definition of a business metric (churn, net
+        revenue, active customers) with owner, time window, exclusions, page
+        link, contributors from Teamwork Graph and conflict count. Use before
+        quoting a metric.
       inputs:
         metricName:
           title: Metric name
           type: string
           required: true
-          description: The metric name or a known alias, for example "churn rate" or "customer churn".
+          description: The metric name or a known alias, for example "churn rate" or
+            "customer churn".
 
     - key: compare-metric-definitions
       name: Compare metric definitions
       function: compareDefinitions
       actionVerb: GET
-      description: Compares every team's definition of one metric and returns each concrete difference (time window, calculation, filters, exclusions, sources) with a severity and a plain-English explanation.
+      description: Compares every team's definition of one metric and returns each
+        concrete difference (time window, calculation, filters, exclusions,
+        sources) with a severity and a plain-English explanation.
       inputs:
         metricName:
           title: Metric name
@@ -92,19 +101,24 @@ modules:
       name: List metric conflicts
       function: listMetricConflicts
       actionVerb: GET
-      description: Lists metrics whose definitions conflict between teams, with severity, teams involved and canonical owner, plus the metrics whose definitions agree.
+      description: Lists metrics whose definitions conflict between teams, with
+        severity, teams involved and canonical owner, plus the metrics whose
+        definitions agree.
       inputs:
         minimumSeverity:
           title: Minimum severity
           type: string
           required: false
-          description: Only include conflicts at or above this level - low, medium or high. Defaults to low.
+          description: Only include conflicts at or above this level - low, medium or
+            high. Defaults to low.
 
     - key: request-metric-reconciliation
       name: Ask data team to reconcile a metric
       function: requestReconcile
       actionVerb: CREATE
-      description: Creates a Jira task asking the data team to agree one canonical definition for a disputed metric, listing every difference and linking every definition page. Only call after the user confirms.
+      description: Creates a Jira task asking the data team to agree one canonical
+        definition for a disputed metric, listing every difference and linking
+        every definition page. Only call after the user confirms.
       inputs:
         metricName:
           title: Metric name
@@ -115,17 +129,20 @@ modules:
           title: Jira project key
           type: string
           required: false
-          description: Project for the task, for example DATA. Defaults to the project set on the Metric Health page.
+          description: Project for the task, for example DATA. Defaults to the project set
+            on the Metric Health page.
         sourceIssueKey:
           title: Related Jira request
           type: string
           required: false
-          description: Key of the business request that surfaced the conflict, for example MKT-12. It will be linked.
+          description: Key of the business request that surfaced the conflict, for example
+            MKT-12. It will be linked.
         note:
           title: Note
           type: string
           required: false
-          description: Short context for the data team, such as the meeting the number is needed for.
+          description: Short context for the data team, such as the meeting the number is
+            needed for.
 
   # ---------- Background sync ----------
   trigger:
@@ -169,7 +186,7 @@ resources:
     path: resources/agent
 
 app:
-  id: ari:cloud:ecosystem::app/00000000-0000-0000-0000-000000000000 # replaced by `forge register`
+  id: ari:cloud:ecosystem::app/b945c519-8574-4bd9-973c-f1752ae73dc7
   runtime:
     name: nodejs22.x
   compatibility:
@@ -180,16 +197,13 @@ app:
 
 permissions:
   scopes:
-    # Jira: read business requests, create reconcile tasks
+    - read:confluence-content.summary
     - read:jira-work
     - write:jira-work
-    # Confluence: find and read metric definition pages
     - read:page:confluence
     - read:label:confluence
     - search:confluence
     - read:confluence-content.all
-    # App storage for the metric registry
     - storage:app
-    # Teamwork Graph API (read-only): page contributors
     - read:graph:page:confluence
     - read:graph:user:atlassian
